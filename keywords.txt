@@ -1,0 +1,22 @@
+#######################################
+# Syntax Coloring Map For Millis Dispatch
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+mildisp_t   KEYWORD1
+mdstatus_t  KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+AddTask KEYWORD2
+Dispatch    KEYWORD2
+ChangePeriod    KEYWORD2
+RemoveTask  KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
