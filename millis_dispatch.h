@@ -136,7 +136,6 @@ mdstatus_t millisDispatch_t<numTask>::RemoveTask(TaskFuction_t task) {
             break;
         }
     }
-
     if (i >= numTask) {
         return (MILDISP_BADTASK);
     }
