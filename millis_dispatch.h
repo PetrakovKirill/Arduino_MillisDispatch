@@ -118,10 +118,12 @@ mdstatus_t millisDispatch_t<numTask>::AddTask(TaskFuction_t newTask, uint32_t ta
         return (MILDISP_OVF_TASK);
     }
 
-    taskList[freeTask].TaskFuction = newTask;
-    taskList[freeTask].taskPeriod  = taskPeriod;
-    taskList[freeTask].milState    = millis();
-    
+    /* atomic modification */
+    cli();
+        taskList[freeTask].TaskFuction = newTask;
+        taskList[freeTask].taskPeriod  = taskPeriod;
+        taskList[freeTask].milState    = millis();
+    sei();
     return (MILDISP_OK);
 }
 
@@ -140,10 +142,12 @@ mdstatus_t millisDispatch_t<numTask>::RemoveTask(TaskFuction_t task) {
         return (MILDISP_BADTASK);
     }
 
-    taskList[i].TaskFuction = NULL;
-    taskList[i].taskPeriod  = 0;
-    taskList[i].milState    = 0;
-
+    /* atomic modification */
+    cli();
+        taskList[i].TaskFuction = NULL;
+        taskList[i].taskPeriod  = 0;
+        taskList[i].milState    = 0;
+    sei();
     return (MILDISP_OK);
 }
 
@@ -162,8 +166,10 @@ mdstatus_t millisDispatch_t<numTask>::ChangePeriod(TaskFuction_t task, uint32_t 
         return (MILDISP_BADTASK);
     }
 
-    taskList[i].taskPeriod  = newPeriod;
-
+    /* atomic modification */
+    cli();
+        taskList[i].taskPeriod  = newPeriod;
+    sei();
     return (MILDISP_OK);
 }
 
