@@ -1,10 +1,35 @@
 #ifndef _MILLIS_DISPATCH_H_
 #define _MILLIS_DISPATCH_H_
 
+/*
+The MIT License (MIT)
+
+Copyright (c) "2019" "Petrakov Kirill"
+ 
+ Permission is hereby granted, free of charge, to any person obtaining
+ a copy of this software and associated documentation files (the
+ "Software"), to deal in the Software without restriction, including
+ without limitation the rights to use, copy, modify, merge, publish,
+ distribute, sublicense, and/or sell copies of the Software, and to
+ permit persons to whom the Software is furnished to do so, subject to
+ the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included
+ in all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
 #include <stdint.h>
 #include <Arduino.h>
 
-typedef void (*TaskFuction_t)(void);
+typedef void (*TaskFunction_t)(void);
 
 /**
  * Возможные состояния, возващаемые методами класса millisDispatch_t
@@ -21,9 +46,9 @@ template <uint8_t numTask>
 class millisDispatch_t {
 private:
     struct mdtask_t {
-        uint32_t      milState;
-        uint32_t      taskPeriod;
-        TaskFuction_t TaskFuction;
+        uint32_t       milState;
+        uint32_t       taskPeriod;
+        TaskFunction_t TaskFunction;
     } taskList[numTask];
 
 public:
@@ -31,40 +56,40 @@ public:
 
     /**
      * Добаление новой функции в список диспетчера
-     * \param [in] newTask Указатель на пользовательсую функцию 
+     * \param [in] newTask Указатель на пользовательскую функцию 
      *      (указатель на функцию = имя функции) 
      * \param [in] taskPeriod Период ожидания между вызовами функции
      * 
      * \return Статус типа mdstatus_t
      */
-    mdstatus_t AddTask(TaskFuction_t newTask, uint32_t taskPeriod);
+    mdstatus_t AddTask(TaskFunction_t newTask, uint32_t taskPeriod);
 
 
     /**
-     * Выполнение одной итерации диспетчиризации
+     * Выполнение одной итерации диспетчеризации
      */
     void Dispatch(void);
 
 
     /**
      * Изменение периода вызова уже зарегистрированной функции
-     * \param [in] task Указатель на пользовательсую функцию 
+     * \param [in] task Указатель на пользовательскую функцию 
      *      (указатель на функцию = имя функции) 
      * \param [in] newPeriod Новый период ожидания между вызовами функции
      * 
      * \return Статус типа mdstatus_t
      */
-    mdstatus_t ChangePeriod(TaskFuction_t task, uint32_t newPeriod);
+    mdstatus_t ChangePeriod(TaskFunction_t task, uint32_t newPeriod);
 
 
     /**
-     * Удаление функции из списка диспетчиризации
-     * \param [in] task Указатель на пользовательсую функцию 
+     * Удаление функции из списка диспетчеризации
+     * \param [in] task Указатель на пользовательскую функцию 
      *      (указатель на функцию = имя функции) 
      * 
      * \return Статус типа mdstatus_t
      */
-    mdstatus_t RemoveTask(TaskFuction_t task);
+    mdstatus_t RemoveTask(TaskFunction_t task);
 };
 
 
@@ -87,10 +112,10 @@ void millisDispatch_t<numTask>::Dispatch(void) {
 
     for(i = 0; i < numTask; ++i) {
         m = millis();
-        if ( taskList[i].TaskFuction && 
+        if ( taskList[i].TaskFunction && 
            ( (m - taskList[i].milState) >= taskList[i].taskPeriod) ) {
             taskList[i].milState = m;
-            taskList[i].TaskFuction();
+            taskList[i].TaskFunction();
         }
     }
 }
@@ -98,7 +123,7 @@ void millisDispatch_t<numTask>::Dispatch(void) {
 
 
 template <uint8_t numTask>
-mdstatus_t millisDispatch_t<numTask>::AddTask(TaskFuction_t newTask, uint32_t taskPeriod) {
+mdstatus_t millisDispatch_t<numTask>::AddTask(TaskFunction_t newTask, uint32_t taskPeriod) {
     uint8_t i;
     int16_t freeTask = -1;
 
@@ -107,9 +132,9 @@ mdstatus_t millisDispatch_t<numTask>::AddTask(TaskFuction_t newTask, uint32_t ta
     }
 
     for (i = 0; i < numTask; i++) {
-        if ( (freeTask < 0) && (taskList[i].TaskFuction == NULL) ) {
+        if ( (freeTask < 0) && (taskList[i].TaskFunction == NULL) ) {
             freeTask = i;
-        } else if (taskList[i].TaskFuction == newTask) {
+        } else if (taskList[i].TaskFunction == newTask) {
             return (MILDISP_DUBLTASK);
         }
     }
@@ -120,9 +145,9 @@ mdstatus_t millisDispatch_t<numTask>::AddTask(TaskFuction_t newTask, uint32_t ta
 
     /* atomic modification */
     cli();
-        taskList[freeTask].TaskFuction = newTask;
-        taskList[freeTask].taskPeriod  = taskPeriod;
-        taskList[freeTask].milState    = millis();
+        taskList[freeTask].TaskFunction = newTask;
+        taskList[freeTask].taskPeriod   = taskPeriod;
+        taskList[freeTask].milState     = millis();
     sei();
     return (MILDISP_OK);
 }
@@ -130,11 +155,11 @@ mdstatus_t millisDispatch_t<numTask>::AddTask(TaskFuction_t newTask, uint32_t ta
 
 
 template <uint8_t numTask>
-mdstatus_t millisDispatch_t<numTask>::RemoveTask(TaskFuction_t task) {
+mdstatus_t millisDispatch_t<numTask>::RemoveTask(TaskFunction_t task) {
     uint8_t i;
 
     for (i = 0; i < numTask; i++) {
-        if (taskList[i].TaskFuction == task) {
+        if (taskList[i].TaskFunction == task) {
             break;
         }
     }
@@ -144,7 +169,7 @@ mdstatus_t millisDispatch_t<numTask>::RemoveTask(TaskFuction_t task) {
 
     /* atomic modification */
     cli();
-        taskList[i].TaskFuction = NULL;
+        taskList[i].TaskFunction = NULL;
         taskList[i].taskPeriod  = 0;
         taskList[i].milState    = 0;
     sei();
@@ -154,10 +179,10 @@ mdstatus_t millisDispatch_t<numTask>::RemoveTask(TaskFuction_t task) {
 
 
 template <uint8_t numTask>
-mdstatus_t millisDispatch_t<numTask>::ChangePeriod(TaskFuction_t task, uint32_t newPeriod) {
+mdstatus_t millisDispatch_t<numTask>::ChangePeriod(TaskFunction_t task, uint32_t newPeriod) {
     uint8_t i;
     for (i = 0; i < numTask; i++) {
-        if (taskList[i].TaskFuction == task) {
+        if (taskList[i].TaskFunction == task) {
             break;
         }
     }
